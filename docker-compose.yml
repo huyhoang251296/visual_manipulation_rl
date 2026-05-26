@@ -1,0 +1,48 @@
+# ==============================================================================
+# docker-compose.yml
+#
+# USAGE:
+#   docker compose up --build -d        # build + start container in background
+#   docker compose exec workspace bash  # open a bash shell inside the container
+#                                       # detach without stopping: Ctrl+D or exit
+#   docker compose down                 # stop and remove container
+#
+# Override the base image without editing this file:
+#   BASE_IMAGE=ubuntu:20.04 docker compose up --build -d
+# ==============================================================================
+
+services:
+  workspace:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-ubuntu:22.04}
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}   # set in your shell for private repos
+
+    image: student-project:latest
+    container_name: student-workspace
+    
+    ## Environment variables ─────────────────────────────────────────────────────
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_QPA_PLATFORM=xcb
+
+    # ── Volume mount ───────────────────────────────────────────────────────────
+    # ./workspace on your machine ↔ /workspace inside the container.
+    # Files you create/edit locally are immediately visible inside, and vice versa.
+    volumes:
+      - ./workspace:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      # - ~/.ssh:/root/.ssh:ro   # mounts your host SSH keys as read-only
+
+    # ── Keep the container alive ───────────────────────────────────────────────
+    stdin_open: true
+    tty: true
+
+    # Restart unless explicitly stopped, so the container survives detaching
+    restart: unless-stopped
+
+    working_dir: /workspace
+    # NOTE: do not set `command` here — it would skip the ENTRYPOINT in the
+    # Dockerfile, preventing clone_repos.sh from running at startup.
