@@ -20,13 +20,14 @@ services:
         BASE_IMAGE: ${BASE_IMAGE:-ubuntu:22.04}
         GITHUB_TOKEN: ${GITHUB_TOKEN:-}   # set in your shell for private repos
 
-    image: student-project:latest
-    container_name: student-workspace
-    
+    image: visual-manipulation-rl:latest
+    container_name: visual-manipulation-rl-workspace
+
     ## Environment variables ─────────────────────────────────────────────────────
     environment:
       - DISPLAY=${DISPLAY}
       - QT_QPA_PLATFORM=xcb
+      - XDG_RUNTIME_DIR=/workspace/root-user
 
     # ── Volume mount ───────────────────────────────────────────────────────────
     # ./workspace on your machine ↔ /workspace inside the container.
@@ -34,7 +35,9 @@ services:
     volumes:
       - ./workspace:/workspace
       - /tmp/.X11-unix:/tmp/.X11-unix
-      # - ~/.ssh:/root/.ssh:ro   # mounts your host SSH keys as read-only
+      - ~/.ssh:/root/.ssh:ro   # mounts your host SSH keys as read-only
+      - /dev/dri:/dev/dri   # mounts your host GPU devices as read-only
+      - /run/user/1000:/run/user/1000   # mounts your host user runtime dir for GUI apps
 
     # ── Keep the container alive ───────────────────────────────────────────────
     stdin_open: true

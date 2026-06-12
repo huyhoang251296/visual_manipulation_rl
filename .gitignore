@@ -14,3 +14,6 @@ env/
 
 # Ignore dotenv file containing environment variables
 .env
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
