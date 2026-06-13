@@ -3,6 +3,7 @@ from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium.spaces import Box
 import os
+import mujoco
 
 
 class UR3eReachEnv(MujocoEnv, utils.EzPickle):
@@ -60,6 +61,8 @@ class UR3eReachEnv(MujocoEnv, utils.EzPickle):
         self.set_state(qpos, qvel)
         self.target = self._sample_target()
 
+        self._update_target_in_model() # Only for visualization
+
         self.prev_ee_pos = self._get_ee_pos()
         return self._get_obs()
 
@@ -94,6 +97,18 @@ class UR3eReachEnv(MujocoEnv, utils.EzPickle):
         z = self.np_random.uniform(low=0.05, high=0.35)
         return np.array([x, y, z], dtype=np.float64)
 
+    def _update_target_in_model(self):
+        target_sphere_id = mujoco.mj_name2id(
+            self.model,
+            mujoco.mjtObj.mjOBJ_BODY,
+            "target_sphere"
+        )
+        self.model.body_pos[target_sphere_id] = self.target
+
+    # def _compute_reward(self, ee_pos):
+    #     distance = np.linalg.norm(ee_pos - self.target)
+    #     return -distance
+
     def _compute_reward(self, ee_pos):
         distance = np.linalg.norm(ee_pos - self.target)
-        return -distance
+        return np.exp(-5.0 * distance)

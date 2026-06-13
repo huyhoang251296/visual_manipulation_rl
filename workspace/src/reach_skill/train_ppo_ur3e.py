@@ -285,7 +285,7 @@ def main():
             # Save best model by reward
             if not np.isnan(mean_reward) and mean_reward > best_reward:
                 best_reward = mean_reward
-                torch.save(model.state_dict(), os.path.join(args.target_save_dir, f"ppo_ur3e_best_{base_run_name}.pth"))
+                torch.save(model.state_dict(), os.path.join(args.target_save_dir, f"ppo_ur3e_{base_run_name}_best.pth"))
                 writer.add_scalar("charts/best_reward", best_reward, global_step)
                 print(f"  -> New best reward: {best_reward:.2f} (saved to ppo_ur3e_{base_run_name}_best.pth)")
 
