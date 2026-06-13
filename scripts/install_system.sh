@@ -55,14 +55,19 @@ PACKAGES=(
 echo "====> Installing apt packages..."
 apt-get install -y --no-install-recommends "${PACKAGES[@]}"
 
+command -v ffmpeg >/dev/null || (apt update && apt install -y ffmpeg)
+
 # ------------------------------------------------------------------------------
 # Python packages  (edit requirements.txt instead when possible)
 # ------------------------------------------------------------------------------
 # Uncomment and extend as needed:
-# pip3 install --no-cache-dir \
-#     numpy \
-#     pandas \
-#     requests
+pip3 install --no-cache-dir \
+    numpy \
+    pandas \
+    mediapy \
+    jupyter \
+    mujoco
+
 
 # ------------------------------------------------------------------------------
 # Clean up to keep the image small
