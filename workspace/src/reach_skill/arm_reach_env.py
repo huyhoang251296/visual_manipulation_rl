@@ -37,6 +37,8 @@ class UR3eReachEnv(MujocoEnv, utils.EzPickle):
         self.target = np.zeros(3, dtype=np.float64)
         self.prev_ee_pos = np.zeros(3, dtype=np.float64)
 
+        self.prev_distance = None
+
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
         self.step_number += 1
@@ -60,6 +62,7 @@ class UR3eReachEnv(MujocoEnv, utils.EzPickle):
         )
         self.set_state(qpos, qvel)
         self.target = self._sample_target()
+        self.prev_distance = None
 
         self._update_target_in_model() # Only for visualization
 
@@ -109,6 +112,21 @@ class UR3eReachEnv(MujocoEnv, utils.EzPickle):
     #     distance = np.linalg.norm(ee_pos - self.target)
     #     return -distance
 
+    # def _compute_reward(self, ee_pos):
+    #     distance = np.linalg.norm(ee_pos - self.target)
+    #     return np.exp(-5.0 * distance)
+
     def _compute_reward(self, ee_pos):
         distance = np.linalg.norm(ee_pos - self.target)
-        return np.exp(-5.0 * distance)
+
+        reward = -distance * 2.0
+
+        if self.prev_distance is not None:
+            reward += 10.0 * (self.prev_distance - distance)
+
+        if distance < 0.05:
+            reward += 10.0
+
+        self.prev_distance = distance
+        return reward
+    
