@@ -31,6 +31,8 @@ WORKDIR /workspace
 
 # ── System dependencies ───────────────────────────────────────────────────────
 # Runs the shared system-install script so all package setup lives in one place
+COPY requirements.txt /usr/local/bin/requirements.txt
+
 COPY scripts/install_system.sh /tmp/install_system.sh
 RUN chmod +x /tmp/install_system.sh && /tmp/install_system.sh && rm /tmp/install_system.sh
 
@@ -40,7 +42,6 @@ RUN chmod +x /tmp/install_system.sh && /tmp/install_system.sh && rm /tmp/install
 COPY scripts/clone_repos.sh /usr/local/bin/clone_repos.sh
 COPY scripts/entrypoint.sh  /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/clone_repos.sh /usr/local/bin/entrypoint.sh
-
 
 # ── Python dependencies (optional) ─────────────────────────────────────────────
 # COPY requirements.txt /tmp/requirements.txt
@@ -52,6 +53,8 @@ RUN chmod +x /usr/local/bin/clone_repos.sh /usr/local/bin/entrypoint.sh
 # RUN apt update && apt install -y \
 #     gedit \
 #     git
+
+RUN apt-get update && apt-get upgrade -y ros-jazzy-fastcdr ros-jazzy-rosidl-typesupport-fastrtps-cpp
 
 # ── Entrypoint: clone repos into the live volume, then hand off to CMD ────────
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

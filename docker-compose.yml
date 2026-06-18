@@ -22,6 +22,12 @@ services:
 
     image: visual-manipulation-rl:latest
     container_name: visual-manipulation-rl-workspace
+    ports:
+    - "6006:6006"
+
+    networks:
+      ros_ur_net:
+        ipv4_address: 192.168.58.10
 
     ## Environment variables ─────────────────────────────────────────────────────
     environment:
@@ -49,3 +55,28 @@ services:
     working_dir: /workspace
     # NOTE: do not set `command` here — it would skip the ENTRYPOINT in the
     # Dockerfile, preventing clone_repos.sh from running at startup.
+
+  ursim:
+    image: universalrobots/ursim_e-series
+    container_name: ursim
+    networks:
+      ros_ur_net:
+        ipv4_address: 192.168.58.20
+
+    volumes:
+      - .ursim/urcaps:/urcaps 
+      - .ursim/programs:/ursim/programs
+      
+    environment:
+      - ROBOT_MODEL=UR3
+    
+    restart: unless-stopped
+
+networks:
+  ros_ur_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.58.0/24
+          gateway: 192.168.58.1
