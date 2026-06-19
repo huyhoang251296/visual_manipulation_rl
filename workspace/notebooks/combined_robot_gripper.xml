@@ -254,6 +254,9 @@
         </body>
       </body>
     </body>
+    <body pos="0.5 0 0.5" quat="0 1 0 0">
+      <geom name="target_sphere" size="0.02" group="1" rgba="1 0.5 0 0.5"/>
+    </body>
   </worldbody>
 
   <contact>
