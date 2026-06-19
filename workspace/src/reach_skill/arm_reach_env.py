@@ -26,7 +26,7 @@ class UR3eReachEnv(MujocoEnv, utils.EzPickle):
         MujocoEnv.__init__(
             self,
             xml_path,
-            frame_skip=10, # dt = frameskip * model.opt.timestep = 0.01s
+            frame_skip=10, # dt = frameskip * model.opt.timestep = 0.01s -> 100 Hz
             observation_space=observation_space,
             **kwargs,
         )

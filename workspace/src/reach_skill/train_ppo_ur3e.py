@@ -17,6 +17,9 @@ from torch.utils.tensorboard import SummaryWriter
 from arm_reach_env import UR3eReachEnv
 
 
+ACTION_MODEL_VERSION = "action_v0.1"
+
+
 def parse_args():
     parser = argparse.ArgumentParser("CleanRL PPO for UR3eReachEnv")
     parser.add_argument("--seed", type=int, default=42)
@@ -100,12 +103,14 @@ def compute_gae(rewards, values, dones, last_value, gamma, gae_lambda):
 def main():
     args = parse_args()
     run_name = f"cleanrl_ppo_ur3e_seed_{args.seed}"
-    os.makedirs(args.target_save_dir, exist_ok=True)
+
+    exp_target_save_dir = os.path.join(args.target_save_dir, ACTION_MODEL_VERSION)
+    os.makedirs(exp_target_save_dir, exist_ok=True)
     os.makedirs(args.tensorboard_log, exist_ok=True)
 
     # create a base run directory (timestamped) and save hyperparameters there
     base_run_name = f"{run_name}_{int(time.time())}"
-    base_log_dir = os.path.join(args.tensorboard_log, base_run_name)
+    base_log_dir = os.path.join(args.tensorboard_log, ACTION_MODEL_VERSION, base_run_name)
     os.makedirs(base_log_dir, exist_ok=True)
 
     # write hyperparameters to a JSON file and to TensorBoard text
@@ -130,6 +135,21 @@ def main():
     obs_dim = int(np.prod(obs_space.shape))
     act_dim = int(np.prod(act_space.shape))
 
+    delta_action_limit = np.array([
+        0.02, # Joint0 : Base 191 deg/s     -> 1.91 deg/0.01s -> 0.03 rad/0.01s| use 0.02
+        0.02, # Joint1 : Shoulder 191 deg/s -> 1.91 deg/0.01s -> 0.03 rad/0.01s| use 0.02
+        0.02, # Joint2 : Elbow 191 deg/s    -> 1.91 deg/0.01s -> 0.03 rad/0.01s| use 0.02
+        0.04, # Joint3 : Wrist_1 371 deg/s  -> 3.71 deg/0.01s -> 0.06 rad/0.01s| use 0.04
+        0.04, # Joint4 : Wrist_2 371 deg/s  -> 3.71 deg/0.01s -> 0.06 rad/0.01s| use 0.04
+        0.04, # Joint5 : Wrist_3 371 deg/s  -> 3.71 deg/0.01s -> 0.06 rad/0.01s| use 0.04
+        1     # Gripper action range [0, 255] -> completely close in 2s -> 127 / s -> 1.27/0.01s | use 1
+        ])
+    
+    delta_action_limit = np.ones((args.num_envs, 7)) * delta_action_limit
+    delta_action_limit_low = -1 * delta_action_limit
+    delta_action_limit_high = delta_action_limit
+
+
     envs.single_observation_space = obs_space
     envs.single_action_space = act_space
 
@@ -140,6 +160,12 @@ def main():
     global_step = 0
     num_updates = args.total_timesteps // (args.num_steps * args.num_envs)
     obs, _ = envs.reset(seed=args.seed)
+    
+    # current_action = np.zeros((obs.shape[0], model.nu))
+    # current_action[:,:6] = obs[:, :6].copy()
+    current_action = np.hstack((obs[:, :6].copy(),np.zeros((obs.shape[0], 1))))
+    current_action= torch.tensor(current_action, dtype=torch.float32, device=device)
+
     obs = torch.tensor(obs, dtype=torch.float32, device=device)
 
     reward_buffer = deque(maxlen=100)
@@ -156,14 +182,18 @@ def main():
 
         for step in range(args.num_steps):
             with torch.no_grad():
-                action, logprob, entropy, value = model.get_action_and_value(obs)
-            action = action.cpu().numpy()
-            clipped_action = np.clip(action, act_space.low, act_space.high)
+                delta_action, logprob, entropy, value = model.get_action_and_value(obs)
+            delta_action = delta_action.cpu().numpy()
+            clipped_delta_action = np.clip(delta_action, delta_action_limit_low, delta_action_limit_high)
+
+            current_action += clipped_delta_action
+            clipped_action = np.clip(current_action, act_space.low, act_space.high)
+
             next_obs, rewards, terminated, truncated, infos = envs.step(clipped_action)
             dones = np.logical_or(terminated, truncated).astype(np.float32)
 
             obs_buffer[step] = obs.cpu().numpy()
-            actions_buffer[step] = action
+            actions_buffer[step] = current_action
             logprobs_buffer[step] = logprob.cpu().numpy()
             rewards_buffer[step] = rewards
             dones_buffer[step] = dones
@@ -171,6 +201,10 @@ def main():
 
             global_step += args.num_envs
             obs = torch.tensor(next_obs, dtype=torch.float32, device=device)
+
+            current_action = current_action.cpu().numpy()
+            current_action[:, :6] = obs[:, :6].cpu().numpy().copy()
+            current_action= torch.tensor(current_action, dtype=torch.float32, device=device)
 
             if "episode" in infos:
                 reward_buffer.extend(infos["episode"]["r"])
@@ -285,16 +319,16 @@ def main():
             # Save best model by reward
             if not np.isnan(mean_reward) and mean_reward > best_reward:
                 best_reward = mean_reward
-                torch.save(model.state_dict(), os.path.join(args.target_save_dir, f"ppo_ur3e_{base_run_name}_best.pth"))
+                torch.save(model.state_dict(), os.path.join(exp_target_save_dir, f"ppo_ur3e_{base_run_name}_best.pth"))
                 writer.add_scalar("charts/best_reward", best_reward, global_step)
                 print(f"  -> New best reward: {best_reward:.2f} (saved to ppo_ur3e_{base_run_name}_best.pth)")
 
             if reward_buffer:
-                torch.save(model.state_dict(), os.path.join(args.target_save_dir, f"ppo_ur3e_{base_run_name}.pth"))
+                torch.save(model.state_dict(), os.path.join(exp_target_save_dir, f"ppo_ur3e_{base_run_name}.pth"))
 
     envs.close()
     writer.close()
-    torch.save(model.state_dict(), os.path.join(args.target_save_dir, f"ppo_ur3e_{base_run_name}.pth"))
+    torch.save(model.state_dict(), os.path.join(exp_target_save_dir, f"ppo_ur3e_{base_run_name}.pth"))
 
 
 if __name__ == "__main__":
