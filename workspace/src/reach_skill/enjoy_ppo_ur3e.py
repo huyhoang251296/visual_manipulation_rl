@@ -60,6 +60,8 @@ def main():
                 action = mean
 
             action = action.cpu().numpy()
+            print("obs: ", obs)
+            print("Action: ", action)
             action = np.clip(action, act_space.low, act_space.high)
             obs, reward, terminated, truncated, info = env.step(action)
             episode_reward += reward

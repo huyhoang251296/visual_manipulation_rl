@@ -22,8 +22,8 @@ services:
 
     image: visual-manipulation-rl:latest
     container_name: visual-manipulation-rl-workspace
-    ports:
-    - "6006:6006"
+    # ports:
+    # - "6006:6006"
 
     networks:
       ros_ur_net:
@@ -69,6 +69,7 @@ services:
       
     environment:
       - ROBOT_MODEL=UR3
+      - MUJOCO_GL=egl
     
     restart: unless-stopped
 

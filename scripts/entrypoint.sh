@@ -16,6 +16,9 @@ echo "====> Running repo setup in /workspace..."
 /usr/local/bin/clone_repos.sh
 
 echo "====> Starting shell..."
+echo "source /opt/ros/jazzy/setup.sh" >> ~/.bashrc
+echo "source ~/venv/bin/activate" >> ~/.bashrc
+
 # "$@" forwards the CMD value (/bin/bash by default), preserving exec so
 # bash becomes PID 1 and signals work correctly.
 exec "$@"

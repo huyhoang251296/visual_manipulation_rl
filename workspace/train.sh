@@ -1,1 +1,2 @@
-python src/reach_skill/train_ppo_ur3e.py --total-timestep 8000000 --learning-rate 3e-4 --num-envs 16
+# python src/reach_skill/train_ppo_ur3e.py --total-timestep 8000000 --learning-rate 3e-4 --num-envs 16
+python src/reach_skill/train_ppo_ur3e_v2.py --total-timestep 8000000 --learning-rate 3e-4 --num-envs 16

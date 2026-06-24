@@ -54,8 +54,13 @@ clone_repo() {
 # Example public repo:
 # clone_repo "https://github.com/your-org/project-starter.git"
 # clone_repo "https://github.com/your-org/shared-utils.git" "main"
-clone_repo "https://github.com/PickNikRobotics/ros2_robotiq_gripper.git" "humble"
-clone_repo "https://github.com/tylerjw/serial.git" "ros2"
+
+# First test
+# clone_repo "https://github.com/PickNikRobotics/ros2_robotiq_gripper.git" "humble"
+# clone_repo "https://github.com/tylerjw/serial.git" "ros2"
+
+# Try to understand this repo
+# clone_repo "https://github.com/darshmenon/UR3_ROS2_PICK_AND_PLACE.git" 
 
 # Example private repo (requires GITHUB_TOKEN exported in your shell):
 # clone_repo "https://${GITHUB_TOKEN}@github.com/your-org/private-repo.git"

@@ -55,7 +55,7 @@ RUN chmod +x /usr/local/bin/clone_repos.sh /usr/local/bin/entrypoint.sh
 #     git
 
 RUN apt-get update && apt-get upgrade -y ros-jazzy-fastcdr ros-jazzy-rosidl-typesupport-fastrtps-cpp
-
+RUN apt-get install -y libglfw3 libglfw3-dev
 # ── Entrypoint: clone repos into the live volume, then hand off to CMD ────────
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/bin/bash"]

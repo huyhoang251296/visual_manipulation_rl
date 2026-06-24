@@ -50,6 +50,8 @@ PACKAGES=(
     # nodejs
     # npm
     # default-jdk
+    ros-jazzy-ur
+    ros-${ROS_DISTRO}-ros2controlcli
 )
 
 echo "====> Installing apt packages..."
@@ -61,12 +63,17 @@ command -v ffmpeg >/dev/null || (apt update && apt install -y ffmpeg)
 # Python packages  (edit requirements.txt instead when possible)
 # ------------------------------------------------------------------------------
 # Uncomment and extend as needed:
-pip3 install --no-cache-dir \
-    numpy \
-    pandas \
-    mediapy \
-    jupyter \
-    mujoco
+python3 -m venv ~/venv
+source ~/venv/bin/activate
+
+# pip3 install --no-cache-dir \
+#     numpy \
+#     pandas \
+#     mediapy \
+#     jupyter \
+#     mujoco
+
+pip3 install  --no-cache-dir -r /usr/local/bin/requirements.txt
 
 
 # ------------------------------------------------------------------------------
